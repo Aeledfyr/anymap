@@ -117,7 +117,7 @@ pub mod raw;
 ///
 /// Values containing non-static references are not permitted.
 #[derive(Debug)]
-pub struct Map<A: ?Sized + UncheckedAnyExt = Any> {
+pub struct Map<A: ?Sized + UncheckedAnyExt = dyn Any> {
     raw: RawMap<A>,
 }
 
@@ -136,7 +136,7 @@ impl<A: ?Sized + UncheckedAnyExt> Clone for Map<A> where Box<A>: Clone {
 /// Why is this a separate type alias rather than a default value for `Map<A>`? `Map::new()`
 /// doesn’t seem to be happy to infer that it should go with the default value.
 /// It’s a bit sad, really. Ah well, I guess this approach will do.
-pub type AnyMap = Map<Any>;
+pub type AnyMap = Map<dyn Any>;
 
 impl_common_methods! {
     field: Map.raw;
@@ -147,7 +147,7 @@ impl_common_methods! {
 impl<A: ?Sized + UncheckedAnyExt> Map<A> {
     /// Returns a reference to the value stored in the collection for the type `T`, if it exists.
     #[inline]
-    pub fn get<T: IntoBox<A>>(&self) -> Option<&T> {
+    pub fn get<T: 'static>(&self) -> Option<&T> {
         self.raw.get(&TypeId::of::<T>())
             .map(|any| unsafe { any.downcast_ref_unchecked::<T>() })
     }
@@ -155,7 +155,7 @@ impl<A: ?Sized + UncheckedAnyExt> Map<A> {
     /// Returns a mutable reference to the value stored in the collection for the type `T`,
     /// if it exists.
     #[inline]
-    pub fn get_mut<T: IntoBox<A>>(&mut self) -> Option<&mut T> {
+    pub fn get_mut<T: 'static>(&mut self) -> Option<&mut T> {
         self.raw.get_mut(&TypeId::of::<T>())
             .map(|any| unsafe { any.downcast_mut_unchecked::<T>() })
     }
@@ -174,14 +174,14 @@ impl<A: ?Sized + UncheckedAnyExt> Map<A> {
     /// Removes the `T` value from the collection,
     /// returning it if there was one or `None` if there was not.
     #[inline]
-    pub fn remove<T: IntoBox<A>>(&mut self) -> Option<T> {
+    pub fn remove<T: 'static>(&mut self) -> Option<T> {
         self.raw.remove(&TypeId::of::<T>())
             .map(|any| *unsafe { any.downcast_unchecked::<T>() })
     }
 
     /// Returns true if the collection contains a value of type `T`.
     #[inline]
-    pub fn contains<T: IntoBox<A>>(&self) -> bool {
+    pub fn contains<T: 'static>(&self) -> bool {
         self.raw.contains_key(&TypeId::of::<T>())
     }
 
